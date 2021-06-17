@@ -24,7 +24,7 @@ func NewServer(opts *flags.ApiOpts, logger *zap.Logger) *Server {
 	httpLogger := logger.With(zap.String("service", "http"))
 
 	handler := NewHandler()
-	handler.configureRouter()
+	handler.configureRouter(logger)
 
 	httpServer := &http.Server{
 		Addr:              opts.HttpBindAddress,
