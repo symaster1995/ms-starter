@@ -23,12 +23,16 @@ func NewServer(opts *flags.ApiOpts, logger *zap.Logger) *Server {
 
 	httpLogger := logger.With(zap.String("service", "http"))
 
+	handler := NewHandler()
+	handler.configureRouter()
+
 	httpServer := &http.Server{
 		Addr:              opts.HttpBindAddress,
 		ReadHeaderTimeout: opts.HttpReadHeaderTimeout,
 		ReadTimeout:       opts.HttpReadTimeout,
 		WriteTimeout:      opts.HttpWriteTimeout,
 		ErrorLog:          zap.NewStdLog(httpLogger),
+		Handler:           handler,
 	}
 
 	return &Server{
