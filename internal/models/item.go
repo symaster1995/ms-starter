@@ -6,12 +6,11 @@ import (
 )
 
 type ItemService interface {
-
 	FindItemByID(ctx context.Context, id int) (*Item, error)
 
 	FindItem(ctx context.Context, filter ItemFilter) (*Item, error)
 
-	FindItems(ctx context.Context, filter ItemFilter, opt ...FindOptions) ([]*Item, int, error)
+	FindItems(ctx context.Context, filter ItemFilter) ([]*Item, int, error)
 
 	CreateItem(ctx context.Context, i *Item) error
 
@@ -30,16 +29,12 @@ type Item struct {
 type ItemFilter struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+
+	Limit      int `json:"limit"`
+	Offset     int `json:"offset"`
+
 }
 
 type ItemUpdate struct {
 	Name string `json:"name"`
-}
-
-type FindOptions struct {
-	Limit      int
-	Offset     int
-	After      int
-	SortBy     string
-	Descending bool
 }
