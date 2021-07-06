@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/caddyserver/certmagic"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
+	"github.com/symaster1995/ms-starter/internal/models"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
@@ -19,12 +20,13 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(opts *flags.ApiOpts, logger *zap.Logger) *Server {
+func NewServer(opts *flags.ApiOpts, logger *zap.Logger, service models.ItemService) *Server {
 
 	httpLogger := logger.With(zap.String("service", "http"))
 
 	handler := NewHandler()
 	handler.configureRouter(logger)
+	handler.ItemService = service
 
 	httpServer := &http.Server{
 		Addr:              opts.HttpBindAddress,

@@ -8,6 +8,7 @@ import (
 	"github.com/symaster1995/ms-starter/internal/http"
 	"github.com/symaster1995/ms-starter/internal/postgres"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -52,9 +53,17 @@ func NewLauncher() *Launcher {
 }
 
 func (m *Launcher) run(opts *flags.ApiOpts) (err error) {
-	m.log, _ = zap.NewDevelopment() //Initialize logger from zap
+	config := zap.NewDevelopmentConfig() //initialize config for logger
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	m.log, _ = config.Build() //Initialize logger from zap
 	defer m.log.Sync()
-	m.httpServer = http.NewServer(opts, m.log) //Create http Server
+
+	db := postgres.NewDB("") //todo add connection string on option flags
+
+	itemService := postgres.NewItemService(db)
+
+	m.httpServer = http.NewServer(opts, m.log, itemService) //Create http Server
 
 	if err := m.httpServer.Open(m.log); err != nil { //Start http Server
 		return err
