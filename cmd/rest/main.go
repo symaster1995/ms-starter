@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
 	"github.com/symaster1995/ms-starter/internal/http"
 	"github.com/symaster1995/ms-starter/internal/postgres"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"time"
 )
 
 func main() {
@@ -41,23 +41,22 @@ func main() {
 }
 
 type Launcher struct {
-	log        *zap.Logger
+	log        *zerolog.Logger
 	store      postgres.DB
 	httpServer *http.Server
 }
 
 func NewLauncher() *Launcher {
+
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	log := zerolog.New(output).With().Timestamp().Logger()
+
 	return &Launcher{
-		log: zap.NewNop(),
+		log: &log,
 	}
 }
 
 func (m *Launcher) run(opts *flags.ApiOpts) (err error) {
-	config := zap.NewDevelopmentConfig() //initialize config for logger
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
-	m.log, _ = config.Build() //Initialize logger from zap
-	defer m.log.Sync()
 
 	db := postgres.NewDB("") //todo add connection string on option flags
 
@@ -65,7 +64,7 @@ func (m *Launcher) run(opts *flags.ApiOpts) (err error) {
 
 	m.httpServer = http.NewServer(opts, m.log, itemService) //Create http Server
 
-	if err := m.httpServer.Open(m.log); err != nil { //Start http Server
+	if err := m.httpServer.Open(); err != nil { //Start http Server
 		return err
 	}
 	return nil
@@ -74,7 +73,7 @@ func (m *Launcher) run(opts *flags.ApiOpts) (err error) {
 func (m *Launcher) Shutdown() (err error) {
 
 	if err := m.httpServer.Close(); err != nil { //Close http Server
-		m.log.Error("Failed to close http server", zap.Error(err))
+		m.log.Error().Err(err).Msg("Failed to close http server")
 		return err
 	}
 	return nil

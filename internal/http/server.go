@@ -3,9 +3,9 @@ package http
 import (
 	"context"
 	"github.com/caddyserver/certmagic"
+	"github.com/rs/zerolog"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
 	"github.com/symaster1995/ms-starter/internal/models"
-	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"os"
@@ -13,19 +13,17 @@ import (
 )
 
 type Server struct {
-	logger     *zap.Logger
+	log        *zerolog.Logger
 	Addr       string
 	Listener   net.Listener
 	Domain     string
 	httpServer *http.Server
 }
 
-func NewServer(opts *flags.ApiOpts, logger *zap.Logger, service models.ItemService) *Server {
+func NewServer(opts *flags.ApiOpts, logger *zerolog.Logger, service models.ItemService) *Server {
 
-	httpLogger := logger.With(zap.String("service", "http"))
-
-	handler := NewHandler()
-	handler.configureRouter(logger)
+	handler := NewHandler(logger)
+	handler.configureRouter()
 	handler.ItemService = service
 
 	httpServer := &http.Server{
@@ -33,7 +31,6 @@ func NewServer(opts *flags.ApiOpts, logger *zap.Logger, service models.ItemServi
 		ReadHeaderTimeout: opts.HttpReadHeaderTimeout,
 		ReadTimeout:       opts.HttpReadTimeout,
 		WriteTimeout:      opts.HttpWriteTimeout,
-		ErrorLog:          zap.NewStdLog(httpLogger),
 		Handler:           handler,
 	}
 
@@ -41,30 +38,31 @@ func NewServer(opts *flags.ApiOpts, logger *zap.Logger, service models.ItemServi
 		Addr:       opts.HttpBindAddress,
 		Domain:     opts.Domain,
 		httpServer: httpServer,
+		log:        logger,
 	}
 }
 
-func (s *Server) Open(logger *zap.Logger) (err error) {
-	log := logger.With(zap.String("service", "tcp-listener"))
+func (s *Server) Open() (err error) {
 
 	if s.Domain != "" {
 		s.Listener, err = certmagic.Listen([]string{s.Domain})
 	}
+
 	s.Listener, err = net.Listen("tcp", s.Addr)
 
 	if err != nil {
-		log.Error("Failed to set up TCP listener", zap.String("addr", s.Addr), zap.Error(err))
+		s.log.Error().Err(err).Msg("Failed to set up TCP listener")
 		return err
 	}
 
-	go func(log *zap.Logger) {
-		log.Info("Listening", zap.String("transport", "http"), zap.String("addr", s.Addr))
+	go func(log *zerolog.Logger) {
+		log.Debug().Str("address", s.Addr).Msg("Server Listening")
 		if err := s.httpServer.Serve(s.Listener); err != http.ErrServerClosed {
-			log.Error("Failed to serve HTTP", zap.Error(err))
+			log.Error().Err(err).Msg("Failed to serve HTTP")
 			os.Exit(1)
 		}
-		log.Info("Stopping")
-	}(log)
+		log.Info().Msg("Stopping")
+	}(s.log)
 	return nil
 }
 

@@ -22,9 +22,14 @@ func (h *Handler) handleGetItem(w http.ResponseWriter, r *http.Request) {
 	var filter models.ItemFilter
 
 	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+		h.log.Error().Err(err).Msg("Invalid Json")
 		RenderJSON(w, http.StatusBadRequest, errors.New("invalid JSON"))
 		return
 	}
+
+	//items, n,  err := h.ItemService.FindItems(r.Context(), filter)
+
+	//id, err := strconv.Atoi(chi.URLParam(r, "id"))
 }
 
 func (h *Handler) handleGetItems(w http.ResponseWriter, r *http.Request) {
