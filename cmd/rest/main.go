@@ -6,19 +6,36 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
+	"github.com/symaster1995/ms-starter/internal/database"
 	"github.com/symaster1995/ms-starter/internal/http"
-	"github.com/symaster1995/ms-starter/internal/postgres"
+	postgres "github.com/symaster1995/ms-starter/pkg/database"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"time"
 )
 
+type Launcher struct {
+	log        *zerolog.Logger
+	store      postgres.DB
+	httpServer *http.Server
+	apiBackend *http.ApiBackend
+}
+
+func NewLauncher() *Launcher {
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	log := zerolog.New(output).With().Timestamp().Logger()
+
+	return &Launcher{
+		log: &log,
+	}
+}
+
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	v := viper.New()
-	o := flags.NewOpts(v)
+	o := flags.NewConfig(v)
 
 	c := make(chan os.Signal, 1) //make a channel to listen for errors
 	signal.Notify(c, os.Interrupt)
@@ -40,29 +57,25 @@ func main() {
 	}
 }
 
-type Launcher struct {
-	log        *zerolog.Logger
-	store      postgres.DB
-	httpServer *http.Server
-}
+func (m *Launcher) run(opts *flags.Config) error {
 
-func NewLauncher() *Launcher {
-
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	log := zerolog.New(output).With().Timestamp().Logger()
-
-	return &Launcher{
-		log: &log,
+	//Create new db instance
+	db, err := postgres.NewDB(opts.DBConfig.URL, m.log)
+	if err != nil {
+		m.log.Error().Err(err).Msg("Failed to create connection pool")
+		return err
 	}
-}
 
-func (m *Launcher) run(opts *flags.ApiOpts) (err error) {
+	//Create item service
+	itemService := database.NewItemService(db)
 
-	db := postgres.NewDB("") //todo add connection string on option flags
+	//Collection of services for easier integration
+	m.apiBackend = &http.ApiBackend{
+		ItemService: itemService,
+	}
 
-	itemService := postgres.NewItemService(db)
-
-	m.httpServer = http.NewServer(opts, m.log, itemService) //Create http Server
+	//Create http Server
+	m.httpServer = http.NewServer(opts.ApiOpts, m.log, m.apiBackend)
 
 	if err := m.httpServer.Open(); err != nil { //Start http Server
 		return err

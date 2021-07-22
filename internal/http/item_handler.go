@@ -27,6 +27,7 @@ func (h *Handler) handleGetItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	//items, n,  err := h.ItemService.FindItems(r.Context(), filter)
 
 	//id, err := strconv.Atoi(chi.URLParam(r, "id"))

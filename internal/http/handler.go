@@ -17,17 +17,13 @@ type Handler struct {
 }
 
 func NewHandler(logger *zerolog.Logger) *Handler {
-
 	return &Handler{
 		name: "Handler",
 		log:  logger,
 	}
-
-	//h.ItemService = postgres.NewItemService()
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	h.router.ServeHTTP(w, r)
 }
 
@@ -37,7 +33,6 @@ func (h *Handler) configureRouter() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	//r.Use(middleware.Logger)
 
 	r.Use(zeroLogger(h.log))
 
@@ -52,7 +47,7 @@ func zeroLogger(l *zerolog.Logger) func(next http.Handler) http.Handler {
 
 			t1 := time.Now()
 
-			defer func(){
+			defer func() {
 				l.Info().
 					Str("method", r.Method).
 					Str("url", r.URL.Path).
@@ -66,25 +61,3 @@ func zeroLogger(l *zerolog.Logger) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(fn)
 	}
 }
-//
-//func zapLogger(l *zap.Logger) func(next http.Handler) http.Handler {
-//	return func(next http.Handler) http.Handler {
-//		fn := func(w http.ResponseWriter, r *http.Request) {
-//			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-//
-//			t1 := time.Now()
-//			defer func() {
-//				l.Info("Request",
-//					zap.String("method", r.Method),
-//					zap.String("path", r.URL.Path),
-//					zap.String("proto", r.Proto),
-//					zap.Int("status", ww.Status()),
-//					zap.Duration("lat", time.Since(t1)),
-//				)
-//			}()
-//
-//			next.ServeHTTP(ww, r)
-//		}
-//		return http.HandlerFunc(fn)
-//	}
-//}

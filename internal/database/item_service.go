@@ -1,15 +1,16 @@
-package postgres
+package database
 
 import (
 	"context"
 	"github.com/symaster1995/ms-starter/internal/models"
+	"github.com/symaster1995/ms-starter/pkg/database"
 )
 
 type ItemService struct {
-	db *DB
+	db *database.DB
 }
 
-func NewItemService(db *DB) *ItemService {
+func NewItemService(db *database.DB) *ItemService {
 	return &ItemService{db: db}
 }
 

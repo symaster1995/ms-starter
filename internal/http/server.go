@@ -5,7 +5,6 @@ import (
 	"github.com/caddyserver/certmagic"
 	"github.com/rs/zerolog"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
-	"github.com/symaster1995/ms-starter/internal/models"
 	"net"
 	"net/http"
 	"os"
@@ -17,14 +16,14 @@ type Server struct {
 	Addr       string
 	Listener   net.Listener
 	Domain     string
-	httpServer *http.Server
+	HttpServer *http.Server
 }
 
-func NewServer(opts *flags.ApiOpts, logger *zerolog.Logger, service models.ItemService) *Server {
+func NewServer(opts *flags.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *Server {
 
 	handler := NewHandler(logger)
 	handler.configureRouter()
-	handler.ItemService = service
+	handler.ItemService = api.ItemService
 
 	httpServer := &http.Server{
 		Addr:              opts.HttpBindAddress,
@@ -37,7 +36,7 @@ func NewServer(opts *flags.ApiOpts, logger *zerolog.Logger, service models.ItemS
 	return &Server{
 		Addr:       opts.HttpBindAddress,
 		Domain:     opts.Domain,
-		httpServer: httpServer,
+		HttpServer: httpServer,
 		log:        logger,
 	}
 }
@@ -57,7 +56,7 @@ func (s *Server) Open() (err error) {
 
 	go func(log *zerolog.Logger) {
 		log.Debug().Str("address", s.Addr).Msg("Server Listening")
-		if err := s.httpServer.Serve(s.Listener); err != http.ErrServerClosed {
+		if err := s.HttpServer.Serve(s.Listener); err != http.ErrServerClosed {
 			log.Error().Err(err).Msg("Failed to serve HTTP")
 			os.Exit(1)
 		}
@@ -69,5 +68,5 @@ func (s *Server) Open() (err error) {
 func (s *Server) Close() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	return s.httpServer.Shutdown(shutdownCtx)
+	return s.HttpServer.Shutdown(shutdownCtx)
 }
