@@ -2,9 +2,10 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
-	"os"
 	"time"
 )
 
@@ -18,9 +19,6 @@ type DB struct {
 }
 
 func NewDB(dbUrl string, logger *zerolog.Logger) (*DB, error) {
-
-	pgxConfig, err := pgxpool.ParseConfig(dbUrl)
-
 	db := &DB{
 		Now: time.Now,
 		log: logger,
@@ -28,30 +26,23 @@ func NewDB(dbUrl string, logger *zerolog.Logger) (*DB, error) {
 
 	db.ctx, db.cancel = context.WithCancel(context.Background())
 
-	return db, nil
-}
-
-func (db *DB) Open() error {
-
-	//pgxConfig, err := pgxpool.ParseConfig()
-
-	dbPool, err := pgxpool.Connect(db.ctx, db.DSN)
-	//dbPool, err := pgxpool.ConnectConfig(db.ctx, db.DSN)
+	pgxConfig, err := pgxpool.ParseConfig(dbUrl)
 	if err != nil {
-		db.log.Error().Err(err).Msg("unable to connect to database")
-		os.Exit(1)
+		return nil, fmt.Errorf("failed to parse connection string: %w", err)
 	}
 
-	defer dbPool.Close()
-
-	if err := dbPool.Ping(db.ctx); err != nil {
-		return err
+	pgxConfig.BeforeAcquire = func(ctx context.Context, conn *pgx.Conn) bool {
+		// Ping the connection to see if it is still valid. Ping returns an error if
+		// it fails.
+		return conn.Ping(ctx) == nil
 	}
-	db.Pool = dbPool
 
-	/*conn, err := dbPool.Acquire(db.ctx)*/
+	db.Pool, err = pgxpool.ConnectConfig(db.ctx, pgxConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create connection pool: %w", err)
+	}
 
-	return nil
+	return db, nil
 }
 
 func (db *DB) Close() error {
