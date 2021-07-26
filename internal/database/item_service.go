@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/symaster1995/ms-starter/internal/models"
 	"github.com/symaster1995/ms-starter/pkg/database"
 )
@@ -15,7 +16,23 @@ func NewItemService(db *database.DB) *ItemService {
 }
 
 func (i *ItemService) FindItemByID(ctx context.Context, id int) (*models.Item, error) {
-	return nil, nil
+
+	var item models.Item
+
+	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
+
+		err := tx.QueryRow(ctx, `SELECT * FROM Items WHERE ID = $1`, id).Scan(&item.ID, &item.Name, &item.CreatedAt, &item.UpdatedAt)
+
+		if err != nil {
+			return err
+		}
+		return nil
+
+	}); err != nil {
+		return nil, err
+	}
+
+	return &item, nil
 }
 
 func (i *ItemService) FindItem(ctx context.Context, filter models.ItemFilter) (*models.Item, error) {

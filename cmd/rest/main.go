@@ -45,14 +45,14 @@ func main() {
 	m := NewLauncher()
 
 	if err := m.run(o); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 	}
 
 	<-ctx.Done() //wait for cancel() signal
 
 	if err := m.Shutdown(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 	}
 }

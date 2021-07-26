@@ -6,10 +6,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-type Tx struct {
-}
-
-func (db *DB) BeginTransaction(ctx context.Context, isoLevel pgx.TxIsoLevel) error {
+func (db *DB) InitTx(ctx context.Context, isoLevel pgx.TxIsoLevel, f func(tx pgx.Tx) error) error {
 
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -22,19 +19,16 @@ func (db *DB) BeginTransaction(ctx context.Context, isoLevel pgx.TxIsoLevel) err
 	if err != nil {
 		return err
 	}
-	// Rollback is safe to call even if the tx is already closed, so if
-	// the tx commits successfully, this is a no-op
-	defer tx.Rollback(db.ctx)
 
-	_, err = tx.Exec(db.ctx,"insert into foo(id) values (1)")
-	if err != nil {
+	if err := f(tx); err != nil {
+		if err1 := tx.Rollback(ctx); err1 != nil {
+			return fmt.Errorf("rolling back transaction: %v (original error: %w)", err1, err)
+		}
 		return err
 	}
 
-	err = tx.Commit(db.ctx)
-	if err != nil {
-		return err
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
 	}
-
 	return nil
 }
