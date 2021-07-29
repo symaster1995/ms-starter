@@ -10,9 +10,6 @@ type ItemService interface {
 	//FindItemByID returns a single Item by ID
 	FindItemByID(ctx context.Context, id int) (*Item, error)
 
-	// FindItem returns a first Item by filter
-	FindItem(ctx context.Context, filter ItemFilter) (*Item, error)
-
 	// FindItems returns a list of Items matched by filter
 	FindItems(ctx context.Context, filter ItemFilter) ([]*Item, int, error)
 
@@ -35,8 +32,8 @@ type Item struct {
 }
 
 type ItemFilter struct {
-	ID     int    `json:"id"`
-	Name   string `json:"name"`
+	ID     *int    `json:"id"`
+	Name   *string `json:"name"`
 
 	Limit  int    `json:"limit"`
 	Offset int    `json:"offset"`
