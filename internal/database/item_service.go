@@ -7,6 +7,7 @@ import (
 	"github.com/symaster1995/ms-starter/internal/models"
 	"github.com/symaster1995/ms-starter/pkg/database"
 	"strings"
+	"time"
 )
 
 type ItemService struct {
@@ -42,7 +43,7 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 	var args []interface{}
 	where := []string{"1 = 1"}
 
-	if v := filter.Name; v != nil && *v != ""{
+	if v := filter.Name; v != nil && *v != "" {
 		where, args = append(where, "name = $1"), append(args, *v)
 	}
 
@@ -52,7 +53,7 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 		rows, err := tx.Query(ctx, `
 			SELECT * FROM Items
 			WHERE `+strings.Join(where, " AND ")+
-			` ORDER BY id ASC `+ database.FormatLimitOffset(filter.Limit, filter.Offset), args...
+			` ORDER BY id ASC `+database.FormatLimitOffset(filter.Limit, filter.Offset), args...,
 		)
 
 		if err != nil {
@@ -84,6 +85,21 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 }
 
 func (i *ItemService) CreateItem(ctx context.Context, item *models.Item) error {
+	item.CreatedAt = time.Now()
+	item.UpdatedAt = item.CreatedAt
+
+	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
+		err := tx.QueryRow(ctx, `INSERT INTO Items (name, created_at, updated_at) VALUES ($1, $2, $3) RETURNING id`,
+			item.Name, item.CreatedAt, item.UpdatedAt,
+		).Scan(&item.ID)
+
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
