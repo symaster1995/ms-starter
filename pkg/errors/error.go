@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v4"
 	"strings"
 )
 
@@ -27,6 +28,11 @@ const (
 //CheckError is for checking psql specific errors
 func CheckError(err error) *Error {
 	var pgErr *pgconn.PgError
+
+	if err == pgx.ErrNoRows {
+		return Errorf(ErrNotFound, "item not found")
+	}
+
 	if errors.As(err, &pgErr) {
 		switch pgErr.SQLState() {
 		case pgerrcode.UniqueViolation:
@@ -36,6 +42,7 @@ func CheckError(err error) *Error {
 			return Errorf(ErrInternal, "Internal Error")
 		}
 	}
+
 	return Errorf(ErrInternal, "Internal Error")
 }
 

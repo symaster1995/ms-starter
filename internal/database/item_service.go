@@ -104,7 +104,33 @@ func (i *ItemService) CreateItem(ctx context.Context, item *models.Item) error {
 }
 
 func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpdate) (*models.Item, error) {
-	return nil, nil
+
+	item, err := i.FindItemByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	item.UpdatedAt = time.Now()
+	item.Name = upd.Name
+
+	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
+		rows , err := tx.Exec(ctx, `UPDATE items SET name = $1, updated_at = $2 WHERE id = $3`, upd.Name, item.UpdatedAt, id)
+
+		if err != nil {
+			return err
+		}
+
+		if rows.RowsAffected() == 0 {
+			return fmt.Errorf("no rows updated")
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }
 
 func (i *ItemService) DeleteItem(ctx context.Context, id int) error {
