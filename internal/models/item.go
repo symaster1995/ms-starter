@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"github.com/symaster1995/ms-starter/pkg/errors"
 	"time"
 )
 
@@ -32,13 +33,22 @@ type Item struct {
 }
 
 type ItemFilter struct {
-	ID     *int    `json:"id"`
-	Name   *string `json:"name"`
+	ID   *int    `json:"id"`
+	Name *string `json:"name"`
 
-	Limit  int    `json:"limit"`
-	Offset int    `json:"offset"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 type ItemUpdate struct {
 	Name string `json:"name"`
+}
+
+func ValidateItem(name string) error {
+
+	if name == "" {
+		return errors.Errorf(errors.ErrInvalid, "name required")
+	}
+
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/symaster1995/ms-starter/internal/models"
 	"github.com/symaster1995/ms-starter/pkg/database"
+	"github.com/symaster1995/ms-starter/pkg/errors"
 	"strings"
 	"time"
 )
@@ -19,7 +20,6 @@ func NewItemService(db *database.DB) *ItemService {
 }
 
 func (i *ItemService) FindItemByID(ctx context.Context, id int) (*models.Item, error) {
-
 	var item models.Item
 
 	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
@@ -32,6 +32,9 @@ func (i *ItemService) FindItemByID(ctx context.Context, id int) (*models.Item, e
 		return nil
 
 	}); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.Errorf(errors.ErrNotFound, "item not found")
+		}
 		return nil, err
 	}
 
@@ -39,7 +42,6 @@ func (i *ItemService) FindItemByID(ctx context.Context, id int) (*models.Item, e
 }
 
 func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) ([]*models.Item, int, error) {
-
 	var args []interface{}
 	where := []string{"1 = 1"}
 
@@ -65,7 +67,7 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 		for rows.Next() {
 			var item models.Item
 			if err := rows.Err(); err != nil {
-				return fmt.Errorf("failed to iterate: %w", err)
+				return errors.Errorf(errors.ErrInternal, "failed to iterate: %w", err)
 			}
 
 			if err := rows.Scan(&item.ID, &item.Name, &item.CreatedAt, &item.UpdatedAt); err != nil {
@@ -85,6 +87,10 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 }
 
 func (i *ItemService) CreateItem(ctx context.Context, item *models.Item) error {
+	if err := models.ValidateItem(item.Name); err != nil {
+		return err
+	}
+
 	item.CreatedAt = time.Now()
 	item.UpdatedAt = item.CreatedAt
 
@@ -98,12 +104,15 @@ func (i *ItemService) CreateItem(ctx context.Context, item *models.Item) error {
 		}
 		return nil
 	}); err != nil {
-		return err
+		return errors.CheckError(err)
 	}
 	return nil
 }
 
 func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpdate) (*models.Item, error) {
+	if err := models.ValidateItem(upd.Name); err != nil {
+		return nil, err
+	}
 
 	item, err := i.FindItemByID(ctx, id)
 
@@ -115,7 +124,7 @@ func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpd
 	item.Name = upd.Name
 
 	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
-		rows , err := tx.Exec(ctx, `UPDATE items SET name = $1, updated_at = $2 WHERE id = $3`, upd.Name, item.UpdatedAt, id)
+		rows, err := tx.Exec(ctx, `UPDATE items SET name = $1, updated_at = $2 WHERE id = $3`, upd.Name, item.UpdatedAt, id)
 
 		if err != nil {
 			return err
@@ -127,7 +136,7 @@ func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpd
 
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, errors.CheckError(err)
 	}
 
 	return item, nil

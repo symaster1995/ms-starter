@@ -16,7 +16,6 @@ import (
 //ErrServiceUnavailable: 503,
 
 func RenderJSON(w http.ResponseWriter, code int, data interface{}) {
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 
@@ -24,12 +23,10 @@ func RenderJSON(w http.ResponseWriter, code int, data interface{}) {
 		LogError(err)
 		return
 	}
-
 	return
 }
 
 func ErrorJSON(w http.ResponseWriter, err error) {
-
 	code, message := errors.ErrorCode(err), errors.ErrorMessage(err)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -39,6 +36,7 @@ func ErrorJSON(w http.ResponseWriter, err error) {
 		LogError(err)
 		return
 	}
+	return
 }
 
 func LogError(err error) {
