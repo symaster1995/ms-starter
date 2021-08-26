@@ -57,7 +57,7 @@ func (h *Handler) handleGetItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RenderJSON(w, http.StatusOK, itemResponse{Item: items, Count: n})
+	RenderJSON(w, http.StatusOK, itemListResponse{Item: items, Count: n})
 	return
 }
 
@@ -109,9 +109,26 @@ func (h *Handler) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handler) handleDeleteItem(w http.ResponseWriter, r *http.Request) {}
+func (h *Handler) handleDeleteItem(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 
-type itemResponse struct {
-	Item  []*models.Item `json:"items"`
-	Count int            `json:"count"`
+	if err != nil {
+		h.log.Error().Err(err).Msg("parsing id failed")
+		ErrorJSON(w, errors.Errorf(errors.ErrInvalid, "invalid id format"))
+		return
+	}
+
+	if err := h.ItemService.DeleteItem(r.Context(), id); err != nil {
+		h.log.Error().Err(err).Msg("deleting item failed")
+		ErrorJSON(w, err)
+		return
+	}
+
+	RenderJSON(w, http.StatusOK, `{}`)
+	return
+}
+
+type itemListResponse struct {
+	Item    []*models.Item `json:"items"`
+	Count   int            `json:"count"`
 }

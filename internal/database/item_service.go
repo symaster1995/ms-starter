@@ -131,7 +131,7 @@ func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpd
 		}
 
 		if rows.RowsAffected() == 0 {
-			return fmt.Errorf("no rows updated")
+			return fmt.Errorf("no rows updated") // TODO CHECK ERROR FUNCTION IF PASSED
 		}
 
 		return nil
@@ -143,5 +143,28 @@ func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpd
 }
 
 func (i *ItemService) DeleteItem(ctx context.Context, id int) error {
+	_, err := i.FindItemByID(ctx, id)
+
+	if err != nil {
+		return err
+	}
+
+	if err := i.db.InitTx(ctx, pgx.ReadCommitted, func(tx pgx.Tx) error {
+
+		rows, err := tx.Exec(ctx, `DELETE FROM items WHERE id = $1`, id)
+
+		if err != nil {
+			return err
+		}
+
+		if rows.RowsAffected() == 0 {
+			return fmt.Errorf("no rows deleted")
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
