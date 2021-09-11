@@ -17,6 +17,8 @@ type ApiConfig struct {
 }
 
 type Config struct {
+	Testing bool
+
 	Viper    *viper.Viper
 	ApiOpts  *ApiConfig
 	DBConfig *database.Config
@@ -39,8 +41,9 @@ func NewConfig(v *viper.Viper) *Config {
 	}
 
 	config := &Config{
-		Viper: v,
-		ApiOpts: api,
+		Testing:  false,
+		Viper:    v,
+		ApiOpts:  api,
 		DBConfig: db,
 	}
 

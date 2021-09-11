@@ -75,12 +75,15 @@ func (m *Launcher) run(opts *flags.Config) error {
 	}
 
 	//Create http Server
-	m.httpServer = http.NewServer(opts.ApiOpts, m.log, m.apiBackend)
-
-	if err := m.httpServer.Open(); err != nil { //Start http Server
+	if err := m.RunServer(opts.ApiOpts); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (m *Launcher) RunServer(apiOpts *flags.ApiConfig) error {
+	m.httpServer = http.NewServer(apiOpts, m.log, m.apiBackend)
+	return m.httpServer.Open()
 }
 
 func (m *Launcher) Shutdown() (err error) {

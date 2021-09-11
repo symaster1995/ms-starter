@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"github.com/caddyserver/certmagic"
 	"github.com/rs/zerolog"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
@@ -26,7 +27,6 @@ func NewServer(opts *flags.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *
 	handler.ItemService = api.ItemService
 
 	httpServer := &http.Server{
-		Addr:              opts.HttpBindAddress,
 		ReadHeaderTimeout: opts.HttpReadHeaderTimeout,
 		ReadTimeout:       opts.HttpReadTimeout,
 		WriteTimeout:      opts.HttpWriteTimeout,
@@ -34,7 +34,7 @@ func NewServer(opts *flags.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *
 	}
 
 	return &Server{
-		Addr:       opts.HttpBindAddress,
+		Addr: 		opts.HttpBindAddress,
 		Domain:     opts.Domain,
 		HttpServer: httpServer,
 		log:        logger,
@@ -43,7 +43,7 @@ func NewServer(opts *flags.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *
 
 func (s *Server) Open() (err error) {
 
-	if s.Domain != "" {
+	if s.UseTLS() {
 		s.Listener, err = certmagic.Listen([]string{s.Domain})
 	}
 
@@ -69,4 +69,38 @@ func (s *Server) Close() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	return s.HttpServer.Shutdown(shutdownCtx)
+}
+
+func (s *Server) UseTLS() bool {
+	return s.Domain != ""
+}
+
+func (s *Server) Scheme() string {
+	if s.UseTLS() {
+		return "https"
+	}
+	return "http"
+}
+
+func (s *Server) Port() int {
+	if s.Listener == nil {
+		return 0
+	}
+	return s.Listener.Addr().(*net.TCPAddr).Port
+}
+
+func (s *Server) URL() string {
+	scheme, port := s.Scheme(), s.Port()
+
+	// Use localhost unless a domain is specified.
+	domain := "localhost"
+	if s.Domain != "" {
+		domain = s.Domain
+	}
+
+	// Return without port if using standard ports.
+	if (scheme == "http" && port == 80) || (scheme == "https" && port == 443) {
+		return fmt.Sprintf("%s://%s", s.Scheme(), domain)
+	}
+	return fmt.Sprintf("%s://%s:%d", s.Scheme(), domain, s.Port())
 }
