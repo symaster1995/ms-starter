@@ -1,7 +1,6 @@
 package http_test
 
 import (
-	"context"
 	"github.com/rs/zerolog"
 	"github.com/symaster1995/ms-starter/cmd/rest/flags"
 	msHttp "github.com/symaster1995/ms-starter/internal/http"
@@ -15,7 +14,7 @@ import (
 
 type Server struct {
 	*msHttp.Server
-	ItemService mock.ItemService
+	ItemService *mock.ItemService
 }
 
 func MustOpenServer(tb testing.TB) *Server {
@@ -32,11 +31,15 @@ func MustOpenServer(tb testing.TB) *Server {
 		Domain:                "",
 	}
 
+	mockItemService := mock.NewItemService()
+
 	apiBackend := &msHttp.ApiBackend{
-		ItemService: mock.NewItemService(),
+		ItemService: mockItemService,
 	}
 
 	s := &Server{Server: msHttp.NewServer(apiOpts, &log, apiBackend)}
+
+	s.ItemService = mockItemService
 
 	// Begin running test server.
 	if err := s.Open(); err != nil {
@@ -53,7 +56,7 @@ func MustCloseServer(tb testing.TB, s *Server) {
 	}
 }
 
-func (s *Server) MustNewRequest(tb testing.TB, ctx context.Context, method, url string, body io.Reader) *http.Request {
+func (s *Server) MustNewRequest(tb testing.TB, method, url string, body io.Reader) *http.Request {
 	tb.Helper()
 	// Create new net/http request with server's base URL.
 	r, err := http.NewRequest(method, s.URL()+url, body)

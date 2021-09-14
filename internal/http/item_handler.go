@@ -44,7 +44,7 @@ func (h *Handler) handleGetItem(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleGetItems(w http.ResponseWriter, r *http.Request) {
 	var filter models.ItemFilter
 
-	if err := json.NewDecoder(r.Body).Decode(&filter); err != nil {
+	if err := decodeJson(r, &filter); err != nil {
 		h.log.Error().Err(err).Msg("listing item failed")
 		ErrorJSON(w, errors.Errorf(errors.ErrInvalid, "invalid JSON body"))
 		return
@@ -64,7 +64,7 @@ func (h *Handler) handleGetItems(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 	var item models.Item
 
-	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+	if err := decodeJson(r, &item); err != nil {
 		h.log.Error().Err(err).Msg("creating item failed")
 		ErrorJSON(w, errors.Errorf(errors.ErrInvalid, "invalid JSON body"))
 		return
@@ -92,7 +92,7 @@ func (h *Handler) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&itemUpd); err != nil {
+	if err := decodeJson(r, &itemUpd); err != nil {
 		h.log.Error().Err(err).Msg("updating item failed")
 		ErrorJSON(w, errors.Errorf(errors.ErrInvalid, "invalid JSON body"))
 		return
@@ -124,11 +124,15 @@ func (h *Handler) handleDeleteItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RenderJSON(w, http.StatusOK, `{}`)
+	RenderJSON(w, http.StatusOK, `{"message": "item deleted"}`)
 	return
 }
 
+func decodeJson(r *http.Request, data interface{}) error {
+	return json.NewDecoder(r.Body).Decode(data)
+}
+
 type itemListResponse struct {
-	Item    []*models.Item `json:"items"`
-	Count   int            `json:"count"`
+	Item  []*models.Item `json:"items"`
+	Count int            `json:"count"`
 }
