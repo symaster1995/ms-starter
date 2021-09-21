@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -55,7 +56,7 @@ func (s *Server) Open() (err error) {
 	}
 
 	go func(log *zerolog.Logger) {
-		log.Debug().Str("address", s.Addr).Msg("Server Listening")
+		log.Debug().Str("address", s.Addr).Str("OS", runtime.GOOS).Str("Arch", runtime.GOARCH).Msg("Server Listening")
 		if err := s.HttpServer.Serve(s.Listener); err != http.ErrServerClosed {
 			log.Error().Err(err).Msg("Failed to serve HTTP")
 			os.Exit(1)

@@ -1,0 +1,44 @@
+### FETCH SINGLE ITEM
+GET http://localhost:8080/items/1
+Accept: application/json
+Content-Type: application/json
+
+### FETCH ALL ITEMS
+GET http://localhost:8080/items
+Accept: application/json
+Content-Type: application/json
+
+{"name" : ""}
+
+### FETCH ALL ITEMS with name filter
+GET http://localhost:8080/items
+Accept: application/json
+Content-Type: application/json
+
+{"name" : "simon"}
+
+### FETCH ALL ITEMS with name Limit 1
+GET http://localhost:8080/items
+Accept: application/json
+Content-Type: application/json
+
+{"limit": 1}
+
+### CREATE ITEM
+POST http://localhost:8080/items
+Accept: application/json
+Content-Type: application/json
+
+{"name":  "simon"}
+
+### UPDATE ITEM
+PATCH http://localhost:8080/items/2
+Accept: application/json
+Content-Type: application/json
+
+{"name":  "tom"}
+
+### DELETE ITEM
+DELETE http://localhost:8080/items/33
+Accept: application/json
+Content-Type: application/json

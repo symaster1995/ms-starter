@@ -131,7 +131,7 @@ func (i *ItemService) UpdateItem(ctx context.Context, id int, upd models.ItemUpd
 		}
 
 		if rows.RowsAffected() == 0 {
-			return fmt.Errorf("no rows updated") // TODO CHECK ERROR FUNCTION IF PASSED
+			return fmt.Errorf("no rows updated")
 		}
 
 		return nil
