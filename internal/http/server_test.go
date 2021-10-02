@@ -24,7 +24,7 @@ func MustOpenServer(tb testing.TB) *Server {
 	log := zerolog.New(output).With().Timestamp().Logger()
 
 	apiOpts := &flags.ApiConfig{
-		HttpBindAddress:       ":69",
+		HttpBindAddress:       ":6969",
 		HttpReadHeaderTimeout: 10 * time.Second,
 		HttpReadTimeout:       1 * time.Second,
 		HttpWriteTimeout:      1 * time.Second,

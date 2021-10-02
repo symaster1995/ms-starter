@@ -28,7 +28,7 @@ func (tl *TestLauncher) RunOrFail(tb testing.TB, ctx context.Context) {
 func (tl *TestLauncher) Run(tb testing.TB, ctx context.Context) error {
 
 	apiOpts := &flags.ApiConfig{
-		HttpBindAddress:       ":69",
+		HttpBindAddress:       ":6969",
 		HttpReadHeaderTimeout: 10 * time.Second,
 		HttpReadTimeout:       1 * time.Second,
 		HttpWriteTimeout:      1 * time.Second,
