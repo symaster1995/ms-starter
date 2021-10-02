@@ -67,7 +67,7 @@ func (i *ItemService) FindItems(ctx context.Context, filter models.ItemFilter) (
 		for rows.Next() {
 			var item models.Item
 			if err := rows.Err(); err != nil {
-				return errors.Errorf(errors.ErrInternal, "failed to iterate: %w", err)
+				return errors.Errorf(errors.ErrInternal, "failed to iterate: %n", err)
 			}
 
 			if err := rows.Scan(&item.ID, &item.Name, &item.CreatedAt, &item.UpdatedAt); err != nil {
