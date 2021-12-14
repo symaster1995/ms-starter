@@ -2,7 +2,7 @@ package http_test
 
 import (
 	"github.com/rs/zerolog"
-	"github.com/symaster1995/ms-starter/cmd/rest/flags"
+	"github.com/symaster1995/ms-starter/internal/config"
 	msHttp "github.com/symaster1995/ms-starter/internal/http"
 	"github.com/symaster1995/ms-starter/internal/mock"
 	"io"
@@ -23,7 +23,7 @@ func MustOpenServer(tb testing.TB) *Server {
 	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	log := zerolog.New(output).With().Timestamp().Logger()
 
-	apiOpts := &flags.ApiConfig{
+	apiOpts := &config.ApiConfig{
 		HttpBindAddress:       ":6969",
 		HttpReadHeaderTimeout: 10 * time.Second,
 		HttpReadTimeout:       1 * time.Second,

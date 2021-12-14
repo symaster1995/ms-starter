@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/caddyserver/certmagic"
 	"github.com/rs/zerolog"
-	"github.com/symaster1995/ms-starter/cmd/rest/flags"
+	"github.com/symaster1995/ms-starter/internal/config"
 	"net"
 	"net/http"
 	"os"
@@ -21,22 +21,22 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewServer(opts *flags.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *Server {
+func NewServer(apiConfig *config.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *Server {
 
 	handler := NewHandler(logger)
 	handler.configureRouter()
 	handler.ItemService = api.ItemService
 
 	httpServer := &http.Server{
-		ReadHeaderTimeout: opts.HttpReadHeaderTimeout,
-		ReadTimeout:       opts.HttpReadTimeout,
-		WriteTimeout:      opts.HttpWriteTimeout,
+		ReadHeaderTimeout: apiConfig.HttpReadHeaderTimeout,
+		ReadTimeout:       apiConfig.HttpReadTimeout,
+		WriteTimeout:      apiConfig.HttpWriteTimeout,
 		Handler:           handler,
 	}
 
 	return &Server{
-		Addr: 		opts.HttpBindAddress,
-		Domain:     opts.Domain,
+		Addr:       apiConfig.HttpBindAddress,
+		Domain:     apiConfig.Domain,
 		HttpServer: httpServer,
 		log:        logger,
 	}

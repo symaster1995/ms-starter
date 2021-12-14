@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
-	"github.com/symaster1995/ms-starter/cmd/rest/flags"
+	"github.com/symaster1995/ms-starter/internal/config"
 	"github.com/symaster1995/ms-starter/internal/database"
 	"github.com/symaster1995/ms-starter/internal/http"
 	postgres "github.com/symaster1995/ms-starter/pkg/database"
@@ -35,7 +35,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	v := viper.New()
-	o := flags.NewConfig(v)
+	o := config.NewConfig(v)
 
 	c := make(chan os.Signal, 1) //make a channel to listen for errors
 	signal.Notify(c, os.Interrupt)
@@ -57,10 +57,10 @@ func main() {
 	}
 }
 
-func (m *Launcher) run(opts *flags.Config) error {
+func (m *Launcher) run(cfg *config.Config) error {
 
 	//Create new db instance
-	db, err := postgres.NewDB(opts.DBConfig.URL, m.log)
+	db, err := postgres.NewDB(cfg.DBConfig.URL, m.log)
 	if err != nil {
 		m.log.Error().Err(err).Msg("Failed to create connection pool")
 		return err
@@ -75,14 +75,14 @@ func (m *Launcher) run(opts *flags.Config) error {
 	}
 
 	//Create http Server
-	if err := m.RunServer(opts.ApiOpts); err != nil {
+	if err := m.RunServer(cfg.ApiConfig); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Launcher) RunServer(apiOpts *flags.ApiConfig) error {
-	m.httpServer = http.NewServer(apiOpts, m.log, m.apiBackend)
+func (m *Launcher) RunServer(apiConfig *config.ApiConfig) error {
+	m.httpServer = http.NewServer(apiConfig, m.log, m.apiBackend)
 	return m.httpServer.Open()
 }
 

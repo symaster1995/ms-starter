@@ -1,4 +1,4 @@
-package flags
+package config
 
 import (
 	"fmt"
@@ -19,9 +19,9 @@ type ApiConfig struct {
 type Config struct {
 	Testing bool
 
-	Viper    *viper.Viper
-	ApiOpts  *ApiConfig
-	DBConfig *database.Config
+	Viper     *viper.Viper
+	ApiConfig *ApiConfig
+	DBConfig  *database.Config
 }
 
 func NewConfig(v *viper.Viper) *Config {
@@ -41,10 +41,10 @@ func NewConfig(v *viper.Viper) *Config {
 	}
 
 	config := &Config{
-		Testing:  false,
-		Viper:    v,
-		ApiOpts:  api,
-		DBConfig: db,
+		Testing:   false,
+		Viper:     v,
+		ApiConfig: api,
+		DBConfig:  db,
 	}
 
 	return config
