@@ -1,7 +1,7 @@
 package http
 
-import "github.com/symaster1995/ms-starter/internal/models"
+import products "github.com/symaster1995/ms-starter/internal/products/models"
 
 type ApiBackend struct {
-	ItemService models.ItemService
+	ItemService products.ItemService
 }

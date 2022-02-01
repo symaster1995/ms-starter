@@ -4,40 +4,40 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog"
-	"github.com/symaster1995/ms-starter/internal/models"
+	"github.com/symaster1995/ms-starter/internal/products"
+	productsModel "github.com/symaster1995/ms-starter/internal/products/models"
 	"net/http"
 	"time"
 )
 
-type Handler struct {
-	name        string
-	router      chi.Router
-	log         *zerolog.Logger
-	ItemService models.ItemService
+type RootHandler struct {
+	name   string
+	router chi.Router
+	log    *zerolog.Logger
 }
 
-func NewHandler(logger *zerolog.Logger) *Handler {
-	return &Handler{
-		name: "Handler",
-		log:  logger,
-	}
-}
-
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.router.ServeHTTP(w, r)
-}
-
-func (h *Handler) configureRouter() {
+func NewRootHandler(logger *zerolog.Logger, itemService productsModel.ItemService) *RootHandler {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 
-	r.Use(zeroLogger(h.log))
+	r.Use(zeroLogger(logger))
 
-	r.Mount("/items", h.mountItemsRouter())
-	h.router = r
+	itemsHandler := products.NewItemHandler(logger, itemService)
+
+	r.Mount("/items", itemsHandler)
+
+	return &RootHandler{
+		router: r,
+		name:   "RootHandler",
+		log:    logger,
+	}
+}
+
+func (rH *RootHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rH.router.ServeHTTP(w, r)
 }
 
 func zeroLogger(l *zerolog.Logger) func(next http.Handler) http.Handler {

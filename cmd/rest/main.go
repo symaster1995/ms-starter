@@ -6,8 +6,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/symaster1995/ms-starter/internal/config"
-	"github.com/symaster1995/ms-starter/internal/database"
 	"github.com/symaster1995/ms-starter/internal/http"
+	productsDB "github.com/symaster1995/ms-starter/internal/products/database"
 	postgres "github.com/symaster1995/ms-starter/pkg/database"
 	_ "net/http/pprof"
 	"os"
@@ -67,7 +67,7 @@ func (m *Launcher) run(cfg *config.Config) error {
 	}
 
 	//Create item service
-	itemService := database.NewItemService(db)
+	itemService := productsDB.NewItemService(db)
 
 	//Collection of services for easier integration
 	m.apiBackend = &http.ApiBackend{

@@ -3,7 +3,7 @@ package http_test
 import (
 	"context"
 	"github.com/google/go-cmp/cmp"
-	"github.com/symaster1995/ms-starter/internal/models"
+	productsModel "github.com/symaster1995/ms-starter/internal/products/models"
 	"testing"
 	"time"
 )
@@ -16,7 +16,7 @@ func TestItemIndex(t *testing.T) {
 	ctx0 := context.Background()
 
 	//Mock data
-	item := &models.Item{
+	item := &productsModel.Item{
 		ID:        69,
 		Name:      "tony",
 		CreatedAt: time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -24,11 +24,11 @@ func TestItemIndex(t *testing.T) {
 	}
 
 	//Mock Get Items function
-	s.ItemService.FindItemsFn = func(ctx context.Context, filter models.ItemFilter) ([]*models.Item, int, error) {
+	s.ItemService.FindItemsFn = func(ctx context.Context, filter productsModel.ItemFilter) ([]*productsModel.Item, int, error) {
 		if filter.Name != nil && *filter.Name != item.Name {
-			return []*models.Item{}, 0, nil
+			return []*productsModel.Item{}, 0, nil
 		}
-		return []*models.Item{item}, 1, nil
+		return []*productsModel.Item{item}, 1, nil
 	}
 
 	type args struct {
@@ -39,7 +39,7 @@ func TestItemIndex(t *testing.T) {
 
 	type wants struct {
 		err   error
-		items []*models.Item
+		items []*productsModel.Item
 	}
 
 	//collection of tests
@@ -51,14 +51,14 @@ func TestItemIndex(t *testing.T) {
 		{
 			name: "find_all_items",
 			wants: wants{
-				items: []*models.Item{item},
+				items: []*productsModel.Item{item},
 			},
 			args: args{},
 		},
 		{
 			name: "find_non_existing_item_filtered",
 			wants: wants{
-				items: []*models.Item{},
+				items: []*productsModel.Item{},
 			},
 			args: args{
 				Name: "parker",
@@ -68,7 +68,7 @@ func TestItemIndex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var filter = models.ItemFilter{Name: nil, Limit: 0, Offset: 0}
+			var filter = productsModel.ItemFilter{Name: nil, Limit: 0, Offset: 0}
 
 			if tt.args.Name != "" {
 				filter.Name = &tt.args.Name

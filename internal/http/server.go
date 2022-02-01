@@ -23,9 +23,7 @@ type Server struct {
 
 func NewServer(apiConfig *config.ApiConfig, logger *zerolog.Logger, api *ApiBackend) *Server {
 
-	handler := NewHandler(logger)
-	handler.configureRouter()
-	handler.ItemService = api.ItemService
+	handler := NewRootHandler(logger, api.ItemService)
 
 	httpServer := &http.Server{
 		ReadHeaderTimeout: apiConfig.HttpReadHeaderTimeout,
