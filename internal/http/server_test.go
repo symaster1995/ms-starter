@@ -17,6 +17,13 @@ type Server struct {
 	ItemService *mock.ItemService
 }
 
+func TestServer(t *testing.T) {
+	s := MustOpenServer(t)
+	defer MustCloseServer(t, s)
+	time.Sleep(2000 * time.Millisecond)
+	MustCloseServer(t, s)
+}
+
 func MustOpenServer(tb testing.TB) *Server {
 	tb.Helper()
 

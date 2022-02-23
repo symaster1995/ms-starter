@@ -5,7 +5,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog"
 	"github.com/symaster1995/ms-starter/internal/products"
-	productsModel "github.com/symaster1995/ms-starter/internal/products/models"
 	"net/http"
 	"time"
 )
@@ -16,7 +15,7 @@ type RootHandler struct {
 	log    *zerolog.Logger
 }
 
-func NewRootHandler(logger *zerolog.Logger, itemService productsModel.ItemService) *RootHandler {
+func NewRootHandler(logger *zerolog.Logger, api *ApiBackend) *RootHandler {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -25,7 +24,7 @@ func NewRootHandler(logger *zerolog.Logger, itemService productsModel.ItemServic
 
 	r.Use(zeroLogger(logger))
 
-	itemsHandler := products.NewItemHandler(logger, itemService)
+	itemsHandler := products.NewItemHandler(logger, api.ItemService)
 
 	r.Mount("/items", itemsHandler)
 

@@ -1,17 +1,61 @@
-package http_test
+package products
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/google/go-cmp/cmp"
+	"github.com/rs/zerolog"
+	"github.com/symaster1995/ms-starter/internal/mock"
 	productsModel "github.com/symaster1995/ms-starter/internal/products/models"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
 
+type ItemHandlerMock struct {
+	ItemService *mock.ItemService
+}
+
+func TestHttpItemIndex(t *testing.T) {
+
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	log := zerolog.New(output).With().Timestamp().Logger()
+
+	type Response struct {
+		Error string `json:"error"`
+	}
+
+	filter := []byte(`{}`)
+	req := httptest.NewRequest(http.MethodGet, "/items", bytes.NewBuffer(filter))
+	w := httptest.NewRecorder()
+
+	mocker := mock.NewItemService()
+
+	response := Response{}
+
+	itemHandler := NewItemHandler(&log, mocker)
+	itemHandler.handleGetItems(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		t.Errorf("decode response body: %v", err)
+	}
+
+	if response.Error != "" {
+		t.Errorf(response.Error)
+	}
+}
+
 func TestItemIndex(t *testing.T) {
-	// Start the mocked HTTP test server.
-	s := MustOpenServer(t)
-	defer MustCloseServer(t, s)
+
+	itemService := &ItemHandlerMock{
+		ItemService: mock.NewItemService(),
+	}
 
 	ctx0 := context.Background()
 
@@ -24,7 +68,7 @@ func TestItemIndex(t *testing.T) {
 	}
 
 	//Mock Get Items function
-	s.ItemService.FindItemsFn = func(ctx context.Context, filter productsModel.ItemFilter) ([]*productsModel.Item, int, error) {
+	itemService.ItemService.FindItemsFn = func(ctx context.Context, filter productsModel.ItemFilter) ([]*productsModel.Item, int, error) {
 		if filter.Name != nil && *filter.Name != item.Name {
 			return []*productsModel.Item{}, 0, nil
 		}
@@ -74,7 +118,7 @@ func TestItemIndex(t *testing.T) {
 				filter.Name = &tt.args.Name
 			}
 
-			items, _, err := s.ItemService.FindItems(ctx0, filter)
+			items, _, err := itemService.ItemService.FindItems(ctx0, filter)
 			if err != nil {
 				t.Fatal(err)
 			}
